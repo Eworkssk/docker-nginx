@@ -17,7 +17,7 @@ jobs:
 
   build_and_publish_nginx:
     name: Build and publish Docker image to Docker Hub
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
