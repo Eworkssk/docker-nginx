@@ -6,7 +6,7 @@
 
 **Automatic weekly updates**
 
-Latest Nginx Mainline release available for both `linux/amd64` and `linux/arm64/v8` platforms using [Ubuntu PPA by Ondřej Surý](https://launchpad.net/~ondrej/+archive/ubuntu/nginx-mainline). The image uses `nginx-extras` package with additional `brotli` compression and `HTTP3` support.
+Latest Nginx Mainline release available for both `linux/amd64` and `linux/arm64/v8` platforms using [Ubuntu PPA by Ondřej Surý](https://launchpad.net/~ondrej/+archive/ubuntu/nginx-mainline). The image uses `nginx-full` package with additional `brotli` compression and `HTTP3` support.
 
 
 ## Pull
