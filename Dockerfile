@@ -8,7 +8,7 @@ RUN apt update -y \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN add-apt-repository ppa:ondrej/nginx-mainline \
+RUN add-apt-repository ppa:ondrej/nginx \
     && apt update -y \
     && apt install nginx-full libnginx-mod-http-brotli-static libnginx-mod-http-brotli-filter -y \
     && rm -rf /var/lib/apt/lists/* \
