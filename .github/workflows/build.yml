@@ -4,11 +4,12 @@ name: Build Docker images
 on:
 
   push:
-    branches: 
+    branches:
       - "master"
 
   schedule:
-    - cron: "0 0 * * 4"
+    - cron: "0 3 * * 2"
+    - cron: "0 3 * * 5"
 
   workflow_dispatch:
 
@@ -19,26 +20,60 @@ jobs:
     name: Build and publish Docker image to Docker Hub
     runs-on: ubuntu-24.04
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: "master"
 
-      - name: Get year.week tag
-        id: tag
-        run: |
-          YEAR=$(date +'%Y')
-          WEEK=$(date +'%V')
-          echo "TAG=${YEAR}.${WEEK}" >> $GITHUB_ENV
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - uses: mr-smithers-excellent/docker-build-push@v6
-        name: Build & push Docker image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          image: eworkssk/nginx
-          tags: latest,${{ env.TAG }}
-          registry: docker.io
-          multiPlatform: true
-          platform: linux/amd64,linux/arm64/v8
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image for version extraction (amd64 only)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: eworkssk/nginx:version-extract
+
+      - name: Extract nginx version
+        run: |
+          NGINX_VERSION=$(docker run --rm eworkssk/nginx:version-extract nginx -v 2>&1 | grep -oP '(?<=nginx/)\S+')
+          MAJOR_MINOR=$(echo "$NGINX_VERSION" | grep -oP '^\d+\.\d+')
+          echo "NGINX_VERSION=${NGINX_VERSION}" >> $GITHUB_ENV
+          echo "MAJOR_MINOR=${MAJOR_MINOR}" >> $GITHUB_ENV
+
+      - name: Build and push multi-platform image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64/v8
+          push: true
+          tags: |
+            eworkssk/nginx:latest
+            eworkssk/nginx:${{ env.MAJOR_MINOR }}
+            eworkssk/nginx:${{ env.NGINX_VERSION }}
+            ghcr.io/eworkssk/nginx:latest
+            ghcr.io/eworkssk/nginx:${{ env.MAJOR_MINOR }}
+            ghcr.io/eworkssk/nginx:${{ env.NGINX_VERSION }}
